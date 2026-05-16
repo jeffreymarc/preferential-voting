@@ -112,41 +112,50 @@
     gap: 12px;
     background: var(--cream);
     border: 1.5px solid var(--sand-dark);
-    border-radius: 10px;
-    padding: 0.875rem 1rem;
-    cursor: grab;
+    border-radius: 12px;
+    padding: 0.75rem 0.875rem;
     user-select: none;
-    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s, transform 0.15s, background 0.15s;
     touch-action: none;
+    cursor: grab;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .ranking-item:active { cursor: grabbing; }
 
   .ranking-item.dragging {
-    opacity: 0.4;
-    transform: scale(0.98);
+    opacity: 0.35;
+    transform: scale(0.97);
   }
 
   .ranking-item.drag-over {
     border-color: var(--gold);
     background: var(--gold-light);
     transform: scale(1.01);
-    box-shadow: 0 4px 16px rgba(200,146,58,0.15);
+  }
+
+  .ranking-item.moving {
+    border-color: var(--gold);
+    background: var(--gold-light);
+    transition: all 0.18s ease;
   }
 
   .rank-num {
     font-family: 'Fraunces', serif;
-    font-size: 18px;
-    font-weight: 300;
+    font-size: 20px;
+    font-weight: 600;
     color: var(--gold);
-    width: 24px;
+    width: 28px;
     text-align: center;
     flex-shrink: 0;
+    line-height: 1;
   }
 
-  .rank-1 .rank-num { color: var(--gold); font-weight: 600; font-size: 20px; }
-  .rank-2 .rank-num { color: var(--ink-light); }
-  .rank-3 .rank-num { color: var(--ink-light); }
+  .ranking-item:not(.rank-1) .rank-num {
+    font-weight: 300;
+    font-size: 17px;
+    color: var(--ink-light);
+  }
 
   .dest-info {
     flex: 1;
@@ -154,7 +163,7 @@
   }
 
   .dest-name {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
     color: var(--ink);
     line-height: 1.2;
@@ -163,17 +172,68 @@
   .dest-sub {
     font-size: 12px;
     color: var(--ink-light);
-    margin-top: 1px;
+    margin-top: 2px;
+  }
+
+  .dest-flag {
+    font-size: 24px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  /* Up/down arrow buttons — touch-friendly */
+  .move-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .move-btn {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--sand-dark);
+    border-radius: 8px;
+    background: var(--sand);
+    color: var(--ink-light);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s, border-color 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    line-height: 1;
+  }
+
+  .move-btn:active {
+    background: var(--gold-light);
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: scale(0.93);
+  }
+
+  .move-btn:disabled {
+    opacity: 0.2;
+    cursor: default;
+  }
+
+  /* Desktop: show drag handle instead of buttons */
+  @media (hover: hover) and (pointer: fine) {
+    .move-btns { display: none; }
+    .drag-handle { display: flex; }
+    .ranking-item { cursor: grab; }
   }
 
   .drag-handle {
+    display: none;
     color: var(--ink-light);
-    opacity: 0.4;
+    opacity: 0.35;
     flex-shrink: 0;
-    display: flex;
     flex-direction: column;
     gap: 3px;
-    padding: 4px;
+    padding: 6px 4px;
   }
 
   .drag-handle span {
@@ -184,36 +244,40 @@
     border-radius: 2px;
   }
 
-  .dest-flag {
-    font-size: 22px;
-    flex-shrink: 0;
-    line-height: 1;
+  /* Sticky submit at bottom on mobile */
+  .submit-wrap {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(transparent, var(--sand) 30%);
+    padding: 1.5rem 0 1.5rem;
+    margin-top: 0.5rem;
   }
 
   .submit-btn {
     width: 100%;
-    padding: 1rem;
+    padding: 1.1rem;
     background: var(--ink);
     color: var(--cream);
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s, transform 0.1s;
     letter-spacing: 0.01em;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
-  .submit-btn:hover { background: #2d2620; }
-  .submit-btn:active { transform: scale(0.99); }
+  .submit-btn:active { transform: scale(0.985); }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .hint {
     text-align: center;
     font-size: 12px;
     color: var(--ink-light);
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
     line-height: 1.5;
   }
 
@@ -583,10 +647,13 @@
   .admin-link:hover { opacity: 1; }
 
   @media (max-width: 480px) {
-    .vote-header { padding: 2.5rem 1.25rem 2rem; }
-    .winner-card { flex-wrap: wrap; }
+    .vote-header { padding: 2rem 1.25rem 1.75rem; }
+    .vote-body { padding: 1.25rem 1rem 1rem; }
+    .winner-card { flex-wrap: wrap; gap: 0.75rem; padding: 1.25rem; }
     .winner-badge { margin-left: 0; }
     .results-bar-wrap { display: none; }
+    .admin-actions { flex-direction: column; }
+    .results-page { padding: 1.5rem 1rem 3rem; }
   }
 </style>
 </head>
@@ -597,12 +664,12 @@
   <header class="vote-header">
     <p class="eyebrow">Group decision</p>
     <h1>Where are we<br>going <em>next?</em></h1>
-    <p>Drag the destinations into your preferred order — 1 is your top pick.</p>
+    <p>Tap the arrows to rank destinations — 1 is your top pick.</p>
   </header>
 
   <div class="vote-body">
     <div class="ranking-label">
-      <span>Drag to rank</span>
+      <span>Tap ↑↓ to reorder</span>
       <span>9 destinations</span>
     </div>
 
@@ -610,9 +677,10 @@
       <!-- items injected by JS -->
     </ul>
 
-    <p class="hint">Your #1 pick gets the most points. All votes are tallied using preferential voting.</p>
-
-    <button class="submit-btn" id="submit-btn" onclick="submitVote()">Submit my ranking →</button>
+    <div class="submit-wrap">
+      <p class="hint">Your #1 pick gets the most points. All votes are tallied using preferential voting.</p>
+      <button class="submit-btn" id="submit-btn" onclick="submitVote()">Submit my ranking →</button>
+    </div>
   </div>
 </div>
 
@@ -696,13 +764,13 @@ function shuffleArray(arr) {
 let currentOrder = shuffleArray(DESTINATIONS);
 let dragSrcIdx = null;
 
-// ── Build the draggable list
+// ── Build the list with up/down buttons (mobile) and drag (desktop)
 function buildList() {
   const list = document.getElementById('ranking-list');
   list.innerHTML = '';
   currentOrder.forEach((dest, i) => {
     const li = document.createElement('li');
-    li.className = `ranking-item rank-${i+1}`;
+    li.className = `ranking-item${i === 0 ? ' rank-1' : ''}`;
     li.draggable = true;
     li.dataset.idx = i;
     li.innerHTML = `
@@ -712,9 +780,13 @@ function buildList() {
         <div class="dest-name">${dest.name}</div>
         <div class="dest-sub">${dest.sub}</div>
       </div>
+      <div class="move-btns" aria-label="Reorder">
+        <button class="move-btn" onclick="moveItem(${i}, -1)" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button>
+        <button class="move-btn" onclick="moveItem(${i}, 1)" ${i === currentOrder.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button>
+      </div>
       <div class="drag-handle" aria-hidden="true"><span></span><span></span><span></span></div>
     `;
-    // Desktop drag events
+    // Desktop drag
     li.addEventListener('dragstart', e => {
       dragSrcIdx = i;
       setTimeout(() => li.classList.add('dragging'), 0);
@@ -732,47 +804,20 @@ function buildList() {
       }
       dragSrcIdx = null;
     });
-    // Touch events
-    setupTouch(li, i);
     list.appendChild(li);
   });
 }
 
-// ── Touch drag
-function setupTouch(li, idx) {
-  let startY, startIdx, clone;
-  li.addEventListener('touchstart', e => {
-    startY = e.touches[0].clientY;
-    startIdx = idx;
-    clone = li.cloneNode(true);
-    clone.style.cssText = `position:fixed;left:${li.getBoundingClientRect().left}px;width:${li.offsetWidth}px;opacity:0.85;pointer-events:none;z-index:999;border-radius:10px;`;
-    document.body.appendChild(clone);
-    li.style.opacity = '0.3';
-  }, { passive: true });
-
-  li.addEventListener('touchmove', e => {
-    if (!clone) return;
-    const y = e.touches[0].clientY;
-    clone.style.top = (y - 28) + 'px';
-    const items = document.querySelectorAll('.ranking-item');
-    let target = null;
-    items.forEach((item, i) => {
-      const rect = item.getBoundingClientRect();
-      if (y > rect.top && y < rect.bottom) target = i;
-    });
-    if (target !== null && target !== startIdx) {
-      const moved = currentOrder.splice(startIdx, 1)[0];
-      currentOrder.splice(target, 0, moved);
-      startIdx = target;
-      buildList();
-    }
-    e.preventDefault();
-  }, { passive: false });
-
-  li.addEventListener('touchend', () => {
-    if (clone) { clone.remove(); clone = null; }
-    document.querySelectorAll('.ranking-item').forEach(el => el.style.opacity = '');
-  });
+function moveItem(idx, dir) {
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= currentOrder.length) return;
+  const moved = currentOrder.splice(idx, 1)[0];
+  currentOrder.splice(newIdx, 0, moved);
+  buildList();
+  // Re-focus the button that moved so keyboard/screen-reader users stay tracked
+  const items = document.querySelectorAll('.ranking-item');
+  const btn = items[newIdx]?.querySelectorAll('.move-btn')[dir === -1 ? 0 : 1];
+  if (btn && !btn.disabled) btn.focus();
 }
 
 // ── JSONBin helpers
