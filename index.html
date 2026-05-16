@@ -76,35 +76,6 @@
     padding: 2rem 1.25rem 4rem;
   }
 
-  .name-field {
-    margin-bottom: 2rem;
-  }
-
-  .name-field label {
-    display: block;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-light);
-    margin-bottom: 0.5rem;
-  }
-
-  .name-field input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1.5px solid var(--sand-dark);
-    border-radius: 8px;
-    background: var(--cream);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    color: var(--ink);
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .name-field input:focus { border-color: var(--gold); }
-  .name-field input::placeholder { color: var(--ink-light); opacity: 0.5; }
-
   .ranking-label {
     font-size: 12px;
     letter-spacing: 0.08em;
@@ -630,11 +601,6 @@
   </header>
 
   <div class="vote-body">
-    <div class="name-field">
-      <label for="voter-name">Your name</label>
-      <input type="text" id="voter-name" placeholder="Enter your name" autocomplete="given-name" />
-    </div>
-
     <div class="ranking-label">
       <span>Drag to rank</span>
       <span>9 destinations</span>
@@ -700,9 +666,9 @@
 
 <script>
 // ══ CONFIG — edit these ══════════════════════════════════════
-const JSONBIN_BIN_ID   = '6a083027250b1311c35ac9c0';          // from jsonbin.io
-const JSONBIN_API_KEY  = '$2a$10$58MTg3c.o4jo7NvxhEjKtOYOBGxkIPRgIZlEmcArb3ahdAaxgERXm';          // from jsonbin.io
-const ADMIN_PASSWORD   = 'password123';                // set your own password
+const JSONBIN_BIN_ID   = 'YOUR_BIN_ID_HERE';          // from jsonbin.io
+const JSONBIN_API_KEY  = 'YOUR_API_KEY_HERE';          // from jsonbin.io
+const ADMIN_PASSWORD   = 'changeme123';                // set your own password
 // ════════════════════════════════════════════════════════════
 
 const DESTINATIONS = [
@@ -831,11 +797,6 @@ async function saveVotes(votes) {
 
 // ── Submit vote
 async function submitVote() {
-  const nameEl = document.getElementById('voter-name');
-  const name = nameEl.value.trim();
-  if (!name) { nameEl.focus(); nameEl.style.borderColor = '#E24B4A'; return; }
-  nameEl.style.borderColor = '';
-
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.textContent = 'Saving…';
@@ -843,7 +804,7 @@ async function submitVote() {
   try {
     const votes = await getVotes();
     const ranking = currentOrder.map(d => d.id);
-    votes.push({ name, ranking, ts: new Date().toISOString() });
+    votes.push({ ranking, ts: new Date().toISOString() });
     await saveVotes(votes);
     showPage('page-thankyou');
   } catch (err) {
@@ -938,21 +899,6 @@ function renderResults(votes) {
     `;
   });
 
-  html += `</div><p class="results-section-title">Individual votes</p><div class="votes-section">`;
-
-  [...votes].reverse().forEach(v => {
-    const date = new Date(v.ts);
-    const timeStr = date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    html += `<div class="vote-entry">
-      <div class="vote-entry-name">${escHtml(v.name)} <span class="vote-entry-time">${timeStr}</span></div>
-      <div class="vote-entry-picks">`;
-    v.ranking.forEach((id, i) => {
-      const dest = DESTINATIONS.find(d => d.id === id);
-      if (dest) html += `<span class="vote-pick"><span class="pick-num">${i+1}</span> ${dest.flag} ${dest.name}</span>`;
-    });
-    html += `</div></div>`;
-  });
-
   html += `</div>`;
   content.innerHTML = html;
 }
@@ -965,9 +911,9 @@ function escHtml(s) {
 async function exportCSV() {
   const votes = await getVotes();
   if (!votes.length) { alert('No votes to export.'); return; }
-  const header = ['Name', 'Timestamp', ...DESTINATIONS.map((_,i) => `Choice ${i+1}`)];
+  const header = ['Timestamp', ...DESTINATIONS.map((_,i) => `Choice ${i+1}`)];
   const rows = votes.map(v => [
-    `"${v.name}"`, v.ts,
+    v.ts,
     ...v.ranking.map(id => DESTINATIONS.find(d => d.id === id)?.name || id)
   ]);
   const csv = [header, ...rows].map(r => r.join(',')).join('\n');
