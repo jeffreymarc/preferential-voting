@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Group Trip Vote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sand: #F5F0E8;
+    --sand-dark: #E8E0D0;
+    --ink: #1A1612;
+    --ink-light: #6B6259;
+    --gold: #C8923A;
+    --gold-light: #F0DFC0;
+    --cream: #FFFCF7;
+    --green: #2D6A4F;
+    --green-light: #D8F0E4;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--sand);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── VOTE PAGE ── */
+  .vote-header {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+  }
+
+  .vote-header .eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.75rem;
+  }
+
+  .vote-header h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+
+  .vote-header h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .vote-header p {
+    font-size: 14px;
+    color: rgba(255,252,247,0.6);
+    max-width: 340px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .vote-body {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  .name-field {
+    margin-bottom: 2rem;
+  }
+
+  .name-field label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 0.5rem;
+  }
+
+  .name-field input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--sand-dark);
+    border-radius: 8px;
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .name-field input:focus { border-color: var(--gold); }
+  .name-field input::placeholder { color: var(--ink-light); opacity: 0.5; }
+
+  .ranking-label {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ranking-label span {
+    font-size: 11px;
+    background: var(--gold-light);
+    color: var(--gold);
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0;
+    text-transform: none;
+    font-weight: 500;
+  }
+
+  .ranking-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 2rem;
+  }
+
+  .ranking-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--cream);
+    border: 1.5px solid var(--sand-dark);
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    cursor: grab;
+    user-select: none;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    touch-action: none;
+  }
+
+  .ranking-item:active { cursor: grabbing; }
+
+  .ranking-item.dragging {
+    opacity: 0.4;
+    transform: scale(0.98);
+  }
+
+  .ranking-item.drag-over {
+    border-color: var(--gold);
+    background: var(--gold-light);
+    transform: scale(1.01);
+    box-shadow: 0 4px 16px rgba(200,146,58,0.15);
+  }
+
+  .rank-num {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--gold);
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .rank-1 .rank-num { color: var(--gold); font-weight: 600; font-size: 20px; }
+  .rank-2 .rank-num { color: var(--ink-light); }
+  .rank-3 .rank-num { color: var(--ink-light); }
+
+  .dest-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dest-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  .dest-sub {
+    font-size: 12px;
+    color: var(--ink-light);
+    margin-top: 1px;
+  }
+
+  .drag-handle {
+    color: var(--ink-light);
+    opacity: 0.4;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px;
+  }
+
+  .drag-handle span {
+    display: block;
+    width: 18px;
+    height: 1.5px;
+    background: currentColor;
+    border-radius: 2px;
+  }
+
+  .dest-flag {
+    font-size: 22px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+
+  .submit-btn:hover { background: #2d2620; }
+  .submit-btn:active { transform: scale(0.99); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-light);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  /* ── THANK YOU PAGE ── */
+  .thankyou {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .thankyou-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--green-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .thankyou h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .thankyou p {
+    color: var(--ink-light);
+    font-size: 15px;
+    max-width: 300px;
+    line-height: 1.6;
+  }
+
+  /* ── ADMIN PAGE ── */
+  .admin-login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .admin-login-box {
+    background: var(--cream);
+    border: 1.5px solid var(--sand-dark);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+  }
+
+  .admin-login-box h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 1.6rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .admin-login-box p {
+    color: var(--ink-light);
+    font-size: 13px;
+    margin-bottom: 1.5rem;
+  }
+
+  .admin-login-box input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--sand-dark);
+    border-radius: 8px;
+    background: var(--sand);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    margin-bottom: 1rem;
+    text-align: center;
+    letter-spacing: 0.1em;
+    transition: border-color 0.2s;
+  }
+
+  .admin-login-box input:focus { border-color: var(--gold); }
+
+  .admin-login-box button {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .admin-login-box button:hover { background: #2d2620; }
+
+  .admin-error {
+    color: #B03A2E;
+    font-size: 13px;
+    margin-top: 0.75rem;
+    display: none;
+  }
+
+  /* ── RESULTS ── */
+  .results-page {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 4rem;
+  }
+
+  .results-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .results-header .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+  }
+
+  .results-header h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 2rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .results-header p {
+    color: var(--ink-light);
+    font-size: 14px;
+  }
+
+  .results-section-title {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--sand-dark);
+  }
+
+  .winner-card {
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: 14px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .winner-flag { font-size: 3rem; line-height: 1; }
+
+  .winner-info h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 1.6rem;
+    line-height: 1.1;
+  }
+
+  .winner-info p {
+    font-size: 13px;
+    color: rgba(255,252,247,0.55);
+    margin-top: 0.25rem;
+  }
+
+  .winner-badge {
+    margin-left: auto;
+    background: var(--gold);
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .results-table {
+    background: var(--cream);
+    border: 1.5px solid var(--sand-dark);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+
+  .results-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--sand-dark);
+  }
+
+  .results-row:last-child { border-bottom: none; }
+
+  .results-rank {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 16px;
+    color: var(--gold);
+    width: 24px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+
+  .results-flag { font-size: 18px; flex-shrink: 0; }
+
+  .results-dest {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .results-score {
+    font-size: 13px;
+    color: var(--ink-light);
+    text-align: right;
+  }
+
+  .results-bar-wrap {
+    width: 80px;
+    height: 4px;
+    background: var(--sand-dark);
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .results-bar {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
+  .votes-section {
+    margin-top: 2rem;
+  }
+
+  .vote-entry {
+    background: var(--cream);
+    border: 1.5px solid var(--sand-dark);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .vote-entry-name {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .vote-entry-time {
+    font-size: 11px;
+    color: var(--ink-light);
+    font-weight: 400;
+  }
+
+  .vote-entry-picks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .vote-pick {
+    font-size: 12px;
+    background: var(--sand);
+    border-radius: 20px;
+    padding: 2px 10px;
+    color: var(--ink-light);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .vote-pick .pick-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    color: var(--gold);
+    font-size: 11px;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--ink-light);
+    font-size: 14px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--ink-light);
+  }
+
+  .empty-state p { font-size: 15px; margin-bottom: 0.5rem; }
+  .empty-state small { font-size: 13px; opacity: 0.7; }
+
+  .admin-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 2rem;
+  }
+
+  .admin-actions button {
+    flex: 1;
+    padding: 0.625rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--sand-dark);
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink);
+    transition: background 0.15s;
+  }
+
+  .admin-actions button:hover { background: var(--sand-dark); }
+
+  .admin-actions .danger {
+    border-color: #F0B0AD;
+    color: #B03A2E;
+  }
+
+  .admin-actions .danger:hover { background: #FDE8E8; }
+
+  /* nav */
+  .top-nav {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 100;
+  }
+
+  .admin-link {
+    font-size: 11px;
+    color: var(--ink-light);
+    opacity: 0.4;
+    text-decoration: none;
+    background: var(--cream);
+    border: 1px solid var(--sand-dark);
+    border-radius: 20px;
+    padding: 4px 12px;
+    transition: opacity 0.2s;
+  }
+
+  .admin-link:hover { opacity: 1; }
+
+  @media (max-width: 480px) {
+    .vote-header { padding: 2.5rem 1.25rem 2rem; }
+    .winner-card { flex-wrap: wrap; }
+    .winner-badge { margin-left: 0; }
+    .results-bar-wrap { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ VOTE PAGE ══ -->
+<div id="page-vote" class="page active">
+  <header class="vote-header">
+    <p class="eyebrow">Group decision</p>
+    <h1>Where are we<br>going <em>next?</em></h1>
+    <p>Drag the destinations into your preferred order — 1 is your top pick.</p>
+  </header>
+
+  <div class="vote-body">
+    <div class="name-field">
+      <label for="voter-name">Your name</label>
+      <input type="text" id="voter-name" placeholder="Enter your name" autocomplete="given-name" />
+    </div>
+
+    <div class="ranking-label">
+      <span>Drag to rank</span>
+      <span>9 destinations</span>
+    </div>
+
+    <ul class="ranking-list" id="ranking-list">
+      <!-- items injected by JS -->
+    </ul>
+
+    <p class="hint">Your #1 pick gets the most points. All votes are tallied using preferential voting.</p>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitVote()">Submit my ranking →</button>
+  </div>
+</div>
+
+<!-- ══ THANK YOU PAGE ══ -->
+<div id="page-thankyou" class="page">
+  <div class="thankyou">
+    <div class="thankyou-icon">✓</div>
+    <h2>Vote received!</h2>
+    <p>Thanks for voting. Results will be revealed once everyone has had their say.</p>
+  </div>
+</div>
+
+<!-- ══ ADMIN LOGIN ══ -->
+<div id="page-admin-login" class="page">
+  <div class="admin-login">
+    <div class="admin-login-box">
+      <h2>Results</h2>
+      <p>Enter the admin password to view votes and results.</p>
+      <input type="password" id="admin-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter') adminLogin()" />
+      <button onclick="adminLogin()">View results</button>
+      <p class="admin-error" id="admin-error">Incorrect password</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULTS ══ -->
+<div id="page-results" class="page">
+  <div class="results-page">
+    <div class="results-header">
+      <p class="eyebrow">Admin · Preferential tally</p>
+      <h2>The results</h2>
+      <p id="vote-count-label">Loading…</p>
+    </div>
+
+    <div id="results-content">
+      <div class="loading">Tallying votes…</div>
+    </div>
+
+    <div class="admin-actions">
+      <button onclick="refreshResults()">↻ Refresh</button>
+      <button onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="danger" onclick="clearVotes()">✕ Clear all votes</button>
+    </div>
+  </div>
+</div>
+
+<!-- small admin link -->
+<nav class="top-nav">
+  <a href="#" class="admin-link" onclick="showAdminLogin(); return false;">admin</a>
+</nav>
+
+<script>
+// ══ CONFIG — edit these ══════════════════════════════════════
+const JSONBIN_BIN_ID   = '6a083027250b1311c35ac9c0';          // from jsonbin.io
+const JSONBIN_API_KEY  = '$2a$10$58MTg3c.o4jo7NvxhEjKtOYOBGxkIPRgIZlEmcArb3ahdAaxgERXm';          // from jsonbin.io
+const ADMIN_PASSWORD   = 'password123';                // set your own password
+// ════════════════════════════════════════════════════════════
+
+const DESTINATIONS = [
+  { id: 'mackay',   name: "Mackay",      sub: "Justin's house",  flag: '🏠' },
+  { id: 'uluru',    name: "Camping",     sub: "Uluru",           flag: '🏕️' },
+  { id: 'sydney',   name: "Sydney",      sub: "New South Wales", flag: '🌉' },
+  { id: 'byron',    name: "Byron Bay",   sub: "New South Wales", flag: '🌊' },
+  { id: 'philippines', name: "Philippines", sub: "Southeast Asia", flag: '🏝️' },
+  { id: 'goldcoast', name: "Gold Coast", sub: "Queensland",      flag: '🎡' },
+  { id: 'japan',    name: "Japan",       sub: "East Asia",       flag: '🗾' },
+  { id: 'bali',     name: "Bali",        sub: "Indonesia",       flag: '🌺' },
+  { id: 'nz',       name: "New Zealand", sub: "Pacific",         flag: '🥝' },
+];
+
+// ── Shuffle once on load so everyone doesn't start in the same order
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let currentOrder = shuffleArray(DESTINATIONS);
+let dragSrcIdx = null;
+
+// ── Build the draggable list
+function buildList() {
+  const list = document.getElementById('ranking-list');
+  list.innerHTML = '';
+  currentOrder.forEach((dest, i) => {
+    const li = document.createElement('li');
+    li.className = `ranking-item rank-${i+1}`;
+    li.draggable = true;
+    li.dataset.idx = i;
+    li.innerHTML = `
+      <span class="rank-num">${i + 1}</span>
+      <span class="dest-flag" aria-hidden="true">${dest.flag}</span>
+      <div class="dest-info">
+        <div class="dest-name">${dest.name}</div>
+        <div class="dest-sub">${dest.sub}</div>
+      </div>
+      <div class="drag-handle" aria-hidden="true"><span></span><span></span><span></span></div>
+    `;
+    // Desktop drag events
+    li.addEventListener('dragstart', e => {
+      dragSrcIdx = i;
+      setTimeout(() => li.classList.add('dragging'), 0);
+    });
+    li.addEventListener('dragend', () => li.classList.remove('dragging'));
+    li.addEventListener('dragover', e => { e.preventDefault(); li.classList.add('drag-over'); });
+    li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
+    li.addEventListener('drop', e => {
+      e.preventDefault();
+      li.classList.remove('drag-over');
+      if (dragSrcIdx !== null && dragSrcIdx !== i) {
+        const moved = currentOrder.splice(dragSrcIdx, 1)[0];
+        currentOrder.splice(i, 0, moved);
+        buildList();
+      }
+      dragSrcIdx = null;
+    });
+    // Touch events
+    setupTouch(li, i);
+    list.appendChild(li);
+  });
+}
+
+// ── Touch drag
+function setupTouch(li, idx) {
+  let startY, startIdx, clone;
+  li.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY;
+    startIdx = idx;
+    clone = li.cloneNode(true);
+    clone.style.cssText = `position:fixed;left:${li.getBoundingClientRect().left}px;width:${li.offsetWidth}px;opacity:0.85;pointer-events:none;z-index:999;border-radius:10px;`;
+    document.body.appendChild(clone);
+    li.style.opacity = '0.3';
+  }, { passive: true });
+
+  li.addEventListener('touchmove', e => {
+    if (!clone) return;
+    const y = e.touches[0].clientY;
+    clone.style.top = (y - 28) + 'px';
+    const items = document.querySelectorAll('.ranking-item');
+    let target = null;
+    items.forEach((item, i) => {
+      const rect = item.getBoundingClientRect();
+      if (y > rect.top && y < rect.bottom) target = i;
+    });
+    if (target !== null && target !== startIdx) {
+      const moved = currentOrder.splice(startIdx, 1)[0];
+      currentOrder.splice(target, 0, moved);
+      startIdx = target;
+      buildList();
+    }
+    e.preventDefault();
+  }, { passive: false });
+
+  li.addEventListener('touchend', () => {
+    if (clone) { clone.remove(); clone = null; }
+    document.querySelectorAll('.ranking-item').forEach(el => el.style.opacity = '');
+  });
+}
+
+// ── JSONBin helpers
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY };
+
+async function getVotes() {
+  const r = await fetch(`${JSONBIN_BASE}/b/${JSONBIN_BIN_ID}/latest`, { headers: HEADERS });
+  if (!r.ok) throw new Error('Fetch failed');
+  const data = await r.json();
+  return data.record?.votes || [];
+}
+
+async function saveVotes(votes) {
+  const r = await fetch(`${JSONBIN_BASE}/b/${JSONBIN_BIN_ID}`, {
+    method: 'PUT',
+    headers: HEADERS,
+    body: JSON.stringify({ votes })
+  });
+  if (!r.ok) throw new Error('Save failed');
+}
+
+// ── Submit vote
+async function submitVote() {
+  const nameEl = document.getElementById('voter-name');
+  const name = nameEl.value.trim();
+  if (!name) { nameEl.focus(); nameEl.style.borderColor = '#E24B4A'; return; }
+  nameEl.style.borderColor = '';
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    const votes = await getVotes();
+    const ranking = currentOrder.map(d => d.id);
+    votes.push({ name, ranking, ts: new Date().toISOString() });
+    await saveVotes(votes);
+    showPage('page-thankyou');
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Submit my ranking →';
+    alert('Something went wrong. Please try again.\n\n(Make sure JSONBin is configured in the script.)');
+    console.error(err);
+  }
+}
+
+// ── Admin
+function showAdminLogin() { showPage('page-admin-login'); }
+
+function adminLogin() {
+  const pw = document.getElementById('admin-pw').value;
+  const err = document.getElementById('admin-error');
+  if (pw === ADMIN_PASSWORD) {
+    err.style.display = 'none';
+    showPage('page-results');
+    loadResults();
+  } else {
+    err.style.display = 'block';
+    document.getElementById('admin-pw').value = '';
+  }
+}
+
+async function loadResults() {
+  const content = document.getElementById('results-content');
+  const countLabel = document.getElementById('vote-count-label');
+  content.innerHTML = '<div class="loading">Loading votes…</div>';
+  try {
+    const votes = await getVotes();
+    countLabel.textContent = `${votes.length} vote${votes.length !== 1 ? 's' : ''} received`;
+    renderResults(votes);
+  } catch {
+    content.innerHTML = '<div class="loading">Failed to load. Check your JSONBin configuration.</div>';
+  }
+}
+
+function refreshResults() { loadResults(); }
+
+// ── Instant runoff / preferential tally (Borda count for simplicity)
+function tallyBorda(votes) {
+  const n = DESTINATIONS.length;
+  const scores = {};
+  DESTINATIONS.forEach(d => scores[d.id] = 0);
+  votes.forEach(v => {
+    v.ranking.forEach((id, i) => {
+      scores[id] = (scores[id] || 0) + (n - i);
+    });
+  });
+  return DESTINATIONS
+    .map(d => ({ ...d, score: scores[d.id] || 0 }))
+    .sort((a, b) => b.score - a.score);
+}
+
+function renderResults(votes) {
+  const content = document.getElementById('results-content');
+  if (!votes.length) {
+    content.innerHTML = `<div class="empty-state"><p>No votes yet</p><small>Share the link with your group!</small></div>`;
+    return;
+  }
+
+  const ranked = tallyBorda(votes);
+  const maxScore = ranked[0].score;
+  const winner = ranked[0];
+
+  let html = `
+    <div class="winner-card">
+      <div class="winner-flag">${winner.flag}</div>
+      <div class="winner-info">
+        <h3>${winner.name}</h3>
+        <p>${winner.sub}</p>
+      </div>
+      <div class="winner-badge">🏆 Winner</div>
+    </div>
+
+    <p class="results-section-title">Full ranking (Borda count)</p>
+    <div class="results-table">
+  `;
+
+  ranked.forEach((dest, i) => {
+    const pct = maxScore > 0 ? Math.round((dest.score / maxScore) * 100) : 0;
+    html += `
+      <div class="results-row">
+        <span class="results-rank">${i + 1}</span>
+        <span class="results-flag">${dest.flag}</span>
+        <span class="results-dest">${dest.name}</span>
+        <div class="results-bar-wrap"><div class="results-bar" style="width:${pct}%"></div></div>
+        <span class="results-score">${dest.score} pts</span>
+      </div>
+    `;
+  });
+
+  html += `</div><p class="results-section-title">Individual votes</p><div class="votes-section">`;
+
+  [...votes].reverse().forEach(v => {
+    const date = new Date(v.ts);
+    const timeStr = date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    html += `<div class="vote-entry">
+      <div class="vote-entry-name">${escHtml(v.name)} <span class="vote-entry-time">${timeStr}</span></div>
+      <div class="vote-entry-picks">`;
+    v.ranking.forEach((id, i) => {
+      const dest = DESTINATIONS.find(d => d.id === id);
+      if (dest) html += `<span class="vote-pick"><span class="pick-num">${i+1}</span> ${dest.flag} ${dest.name}</span>`;
+    });
+    html += `</div></div>`;
+  });
+
+  html += `</div>`;
+  content.innerHTML = html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Export CSV
+async function exportCSV() {
+  const votes = await getVotes();
+  if (!votes.length) { alert('No votes to export.'); return; }
+  const header = ['Name', 'Timestamp', ...DESTINATIONS.map((_,i) => `Choice ${i+1}`)];
+  const rows = votes.map(v => [
+    `"${v.name}"`, v.ts,
+    ...v.ranking.map(id => DESTINATIONS.find(d => d.id === id)?.name || id)
+  ]);
+  const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'trip-votes.csv'; a.click();
+}
+
+// ── Clear votes
+async function clearVotes() {
+  if (!confirm('Delete ALL votes? This cannot be undone.')) return;
+  await saveVotes([]);
+  loadResults();
+}
+
+// ── Page switching
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── Init
+buildList();
+</script>
+</body>
+</html>
